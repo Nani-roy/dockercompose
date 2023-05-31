@@ -1,0 +1,41 @@
+FROM eclipse-temurin:17-centos7
+WORKDIR /opt/jboss
+ENV JBOSS_HOME /opt/jboss/wildfly
+RUN curl -L -O https://github.com/wildfly/wildfly/releases/download/27.0.1.Final/wildfly-27.0.1.Final.tar.gz && \
+    tar -xf wildfly-27.0.1.Final.tar.gz && \
+    mv  wildfly-27.0.1.Final $JBOSS_HOME && \
+    rm -rf wildfly-27.0.1.Final.tar.gz &&\
+    groupadd jboss && useradd -s /sbin/nologin -g jboss jboss && \
+    chown -R jboss:jboss $JBOSS_HOME
+ENV LAUNCH_JBOSS_IN_BACKGROUND true
+EXPOSE 8080
+USER jboss
+CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
+
+############################################################################
+
+FROM centos:7
+WORKDIR /opt/jboss
+ENV JBOSS_HOME /opt/jboss/wildfly
+RUN yum install java-11-openjdk-devel -y && \
+    java --version && \
+    curl -L -O https://github.com/wildfly/wildfly/releases/download/27.0.1.Final/wildfly-27.0.1.Final.tar.gz && \
+    tar -xf wildfly-27.0.1.Final.tar.gz && \
+    mv  wildfly-27.0.1.Final $JBOSS_HOME && \
+    rm -rf wildfly-27.0.1.Final.tar.gz &&\
+    groupadd jboss && useradd -s /sbin/nologin -g jboss jboss && \
+    chown -R jboss:jboss $JBOSS_HOME
+ENV LAUNCH_JBOSS_IN_BACKGROUND true
+EXPOSE 8080 9990
+USER jboss
+RUN  /opt/jboss/wildfly/bin/add-user.sh -m -u admin -p arnab@123 --silent
+ENTRYPOINT ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
+CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+
+
+####################################################################################
+
+
+FROM wildfly-test
+RUN  /opt/jboss/wildfly/bin/add-user.sh -m -u admin -p arnab@123 --silent
+CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
